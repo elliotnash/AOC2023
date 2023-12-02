@@ -2,33 +2,42 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include <stdbool.h>
 
 typedef struct node {
-    struct node* children;
-    int size;
+    struct node* child;
+    struct node* sibling;
     char key;
     int value;
 } node;
 
 node root;
 
-node* add_node(node* parent, const char key, const char value) {
-    for (int i = 0; i < parent->size; ++i) {
-        if (parent->children[i].key == key) {
-            parent->children[key].value = value;
-            return &parent->children[key];
+node* add_node(node* parent, const char key, const int value) {
+    node* n = parent->child;
+    node* last = NULL;
+    while (n) {
+        last = n;
+        if (n->key == key) {
+            n->value = value;
+            return n;
         }
+        n = n->sibling;
     }
-    // Increase size of array by 1 (this is not effecient)
-    parent->children = realloc(parent->children, sizeof(node) * parent->size+1);
-    parent->children[parent->size].key = key;
-    parent->children[parent->size].value = value;
-    return &parent->children[parent->size++];
+    // The key doesn't exist so we need to create it
+    n = malloc(sizeof(node));
+    // If siblings are not empty we need to link it to the last sibling
+    // Otherwise link to parent
+    if (last) {
+        last->sibling = n;
+    } else {
+        parent->child = n;
+    }
+    n->key = key;
+    n->value = value;
+    return n;
 }
 
-void tree_insert(char* key, int value) {
-    printf("This called with key = %s, value = %d\n", key, value);
+void tree_insert(const char* key, const int value) {
     const int len = strlen(key);
     node* child = &root;
     for (int i = 0; i < len; ++i) {
@@ -50,36 +59,39 @@ void initialize_tree() {
     tree_insert("seven", 7);
     tree_insert("eight", 8);
     tree_insert("nine", 9);
-
-    // // Add one
-    // const node* child = add_node(root, 0, 1, 'o', -1);
-    // child = add_node(child, 0, 1, 'n', -1);
-    // add_node(child, 0, 1, 'e', 1);
-    //
-    // // Add two and three
-    // child = add_node(root, 1, 2, 't', -1);
-    // child = add_node(child, 0, 1, 'w', -1);
-    // add_node(child, 0, 1, 'o', 2);
-    //
-    // child = &root->children[1];
-    // child = add_node(child, 1, 1, 'h', -1);
-    // child = add_node(child, 0, 1, 'r', -1)
 }
 
-int search_number(char* string, int* out) {
-    node* n = &root;
-    for (int i = 0; string[i] != '\0'; ++i) {
-        for (int j = 0; j < n->size; ++j) {
-            if (n->children[j].key == string[i]) {
-                // We found
-            }
+node* get_child_node(const node* parent, const char key) {
+    node* n = parent->child;
+    while (n) {
+        if (n->key == key) {
+            return n;
+        }
+        n = n->sibling;
+    }
+    return NULL;
+}
+
+int search_number(const char* string, int* number_out) {
+    const node* n = &root;
+    const int len = strlen(string);
+
+    for (int i = 0; i < len; ++i) {
+        n = get_child_node(n, string[i]);
+        if (!n) {
+            break;
+        }
+        if (n->value >= 0) {
+            *number_out = n->value;
+            return i+1;
         }
     }
+
+    *number_out = -1;
+    return 1;
 }
 
 int main() {
-    bool found = true;
-
     initialize_tree();
 
     FILE* fp = fopen("input.txt", "r");;
@@ -91,27 +103,51 @@ int main() {
     size_t len = 0;
     ssize_t read;
 
-    int sum = 0;
+    int part1Sum = 0;
+    int part2Sum = 0;
 
     while ((read = getline(&line, &len, fp)) != -1) {
-        int first = -1;
-        int last = -1;
-        for (int i = 0; i < read;) {
-            if (isnumber(line[i])) {
-                if (first == -1) {
-                    first = line[i] - '0';
+        {
+            // Part 1
+            int first = -1;
+            int last = -1;
+            for (int i = 0; i < read; ++i) {
+                if (isnumber(line[i])) {
+                    if (first == -1) {
+                        first = line[i] - '0';
+                    }
+                    last = line[i] - '0';
                 }
-                last = line[i] - '0';
-                ++i;
-            } else {
-                ++i;
-                // if
             }
+            part1Sum += first*10 + last;
         }
-        sum += first*10 + last;
+        {
+            int first = -1;
+            int last = -1;
+            for (int i = 0; i < read;) {
+                if (isnumber(line[i])) {
+                    if (first == -1) {
+                        first = line[i] - '0';
+                    }
+                    last = line[i] - '0';
+                    ++i;
+                } else {
+                    int num;
+                    i += search_number(&line[i], &num);
+                    if (num > 0) {
+                        if (first == -1) {
+                            first = num;
+                        }
+                        last = num;
+                    }
+                }
+            }
+            part2Sum += first*10 + last;
+        }
     }
 
-    printf("Sum is %d", sum);
+    printf("Sum in part 1 is %d\n", part1Sum);
+    printf("Sum in part 2 is %d\n", part2Sum);
 
     fclose(fp);
     if (line)
