@@ -16,7 +16,17 @@ typedef struct {
     set_t* set;
 } game_t;
 
-bool game_is_possible(const game_t* game) {
+void release_game(game_t* game) {
+    set_t* set = game->set;
+    free(game);
+    while (set) {
+        set_t* temp = set->next;
+        free(set);
+        set = temp;
+    }
+}
+
+bool is_game_possible(const game_t* game) {
     const set_t* set = game->set;
     while (set) {
         if (set->red > 12 || set->green > 13 || set->blue > 14) {
@@ -25,6 +35,26 @@ bool game_is_possible(const game_t* game) {
         set = set->next;
     }
     return true;
+}
+
+int game_power(const game_t* game) {
+    int red = 0;
+    int green = 0;
+    int blue = 0;
+    const set_t* set = game->set;
+    while (set) {
+        if (set->red > red) {
+            red = set->red;
+        }
+        if (set->green > green) {
+            green = set->green;
+        }
+        if (set->blue > blue) {
+            blue = set->blue;
+        }
+        set = set->next;
+    }
+    return red*green*blue;
 }
 
 int main() {
@@ -38,6 +68,7 @@ int main() {
     ssize_t read;
 
     int part1sum = 0;
+    int part2sum = 0;
 
     while ((read = getline(&line, &len, fp)) != -1) {
         game_t* game = malloc(sizeof(game_t));
@@ -105,12 +136,18 @@ int main() {
         }
 
         // Part 1
-        if (game_is_possible(game)) {
+        if (is_game_possible(game)) {
             part1sum += game->id;
         }
+
+        // Part 2
+        part2sum += game_power(game);
+
+        release_game(game);
     }
 
     printf("Part 1 answer %d\n", part1sum);
+    printf("Part 2 answer %d\n", part2sum);
 
     fclose(fp);
     if (line)
