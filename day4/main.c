@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
-#include <stdbool.h>
 #include <string.h>
 
 int atoin(const char* start, const char* end) {
@@ -13,6 +11,30 @@ int atoin(const char* start, const char* end) {
         place *= 10;
     }
     return out;
+}
+
+typedef struct {
+    int winners_len;
+    int* winners;
+    int numbers_len;
+    int* numbers;
+} card_t;
+
+int count_cards(const card_t* cards, const int line) {
+    int matches = 0;
+    for (int i = 0; i < cards[line].numbers_len; ++i) {
+        for (int j = 0; j < cards[line].winners_len; ++j) {
+            if (cards[line].winners[j] == cards[line].numbers[i]) {
+                ++matches;
+                break;
+            }
+        }
+    }
+    int new_matches = 0;
+    for (int i = 1; i <= matches; ++i) {
+        new_matches += count_cards(cards, line+i);
+    }
+    return 1 + new_matches;
 }
 
 int main() {
@@ -27,10 +49,12 @@ int main() {
     int part1sum = 0;
     int part2sum = 0;
 
+    card_t* cards = malloc(sizeof(card_t) * 250);
+
+    int num_cards = 0;
     char* line = NULL;
     size_t len = 0;
     ssize_t read;
-
     while ((read = getline(&line, &len, fp)) != -1) {
         // Part 1
         char* colon = strchr(line, ':');
@@ -45,11 +69,14 @@ int main() {
             num = strtok(NULL, " ");
         }
 
+        int* numbers = malloc(sizeof(int) * 30);
         num = strtok(pipe+1, " ");
+        int numbers_len = 0;
         int points = 0;
         int match_val = 1;
         while (num) {
-            int val = atoi(num);
+            const int val = atoi(num);
+            numbers[numbers_len++] = val;
             for (int i = 0; i < num_winners; ++i) {
                 if (winners[i] == val) {
                     points = match_val;
@@ -61,8 +88,12 @@ int main() {
         }
         part1sum += points;
 
-        printf("%d\n", num_winners);
-        free(winners);
+        cards[num_cards++] = (card_t) {num_winners, winners, numbers_len, numbers};
+    }
+
+    // Part 2
+    for (int i = 0; i < num_cards; ++i) {
+        part2sum += count_cards(cards, i);
     }
 
     printf("Part 1 answer %d\n", part1sum);
@@ -70,5 +101,6 @@ int main() {
 
     fclose(fp);
     free(line);
+    free(cards);
     return EXIT_SUCCESS;
 }
