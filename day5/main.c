@@ -91,7 +91,7 @@ int main() {
         }
     }
 
-    // Part 2
+    // Part 2 (this takes a really long time)
     for (int i = 0; i < seeds->count; ++i) {
         const uint64_t start_seed = *(uint64_t*) seeds->data[i++];
         const uint64_t seed_range = *(uint64_t*) seeds->data[i];
