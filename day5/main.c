@@ -70,13 +70,7 @@ int main() {
         }
     }
 
-    arraylist_print(seeds, print_uint64);
-
-    for (int i = 0; i < maps->count; ++i) {
-        arraylist_print(maps->data[i], print_seed_map);
-    }
-
-    // For all seeds
+    // Part 1
     for (int i = 0; i < seeds->count; ++i) {
         uint64_t seed = *(uint64_t*) seeds->data[i];
         // Loop through each stage
@@ -94,6 +88,31 @@ int main() {
         // Now we have the fully mapped seed
         if (part1ans == 0 || seed < part1ans) {
             part1ans = seed;
+        }
+    }
+
+    // Part 2
+    for (int i = 0; i < seeds->count; ++i) {
+        const uint64_t start_seed = *(uint64_t*) seeds->data[i++];
+        const uint64_t seed_range = *(uint64_t*) seeds->data[i];
+        for (uint64_t r = 0; r < seed_range; ++r) {
+            uint64_t seed = start_seed + r;
+            // Loop through each stage
+            for (int j = 0; j < maps->count; ++j) {
+                const arraylist_t* map = maps->data[j];
+                // Loop through each map and if one of them applies, map it
+                for (int k = 0; k < map->count; ++k) {
+                    const seed_map_t* sm = map->data[k];
+                    if (in_seed_map(sm, seed)) {
+                        seed = map_seed(sm, seed);
+                        break;
+                    }
+                }
+            }
+            // Now we have the fully mapped seed
+            if (part2ans == 0 || seed < part2ans) {
+                part2ans = seed;
+            }
         }
     }
 
