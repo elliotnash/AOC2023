@@ -93,3 +93,17 @@ uint64_t line_as_uint64(const char* line) {
     }
     return out;
 }
+
+uint64_t gcd(const uint64_t lhs, const uint64_t rhs) {
+    const uint64_t remainder = lhs % rhs;
+
+    if (remainder == 0) {
+        return rhs;
+    }
+
+    return gcd(rhs, remainder);
+}
+
+uint64_t lcm(const uint64_t lhs, const uint64_t rhs) {
+    return lhs / gcd(lhs, rhs) * rhs;
+}

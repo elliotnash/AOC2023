@@ -24,4 +24,7 @@ arraylist_t* nums_in_line(const char* line, void* (*atonn)(const char*, const ch
 
 uint64_t line_as_uint64(const char* line);
 
+uint64_t gcd(uint64_t lhs, uint64_t rhs);
+uint64_t lcm(uint64_t lhs, uint64_t rhs);
+
 #endif AOCLIB_H

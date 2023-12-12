@@ -44,8 +44,10 @@ int main() {
 
     hash_map_t* nodes = hash_map_create(free_string, free_string, hash_string, 2000, 0.5);
 
+    arraylist_t* starts = arraylist_create(10);
+
     uint64_t part1ans = 0;
-    uint64_t part2ans = 0;
+    uint64_t part2ans = 1;
 
     char* line = NULL;
     size_t len = 0;
@@ -63,6 +65,12 @@ int main() {
         char* key = malloc(sizeof(char) * 3);
         strncpy(key, line, 3);
 
+        if (key[2] == 'A') {
+            char* k2 = malloc(sizeof(char) * 3);
+            strcpy(k2, key);
+            arraylist_add(starts, k2);
+        }
+
         char* left = malloc(sizeof(char) * 3);
         strncpy(left, line+7, 3);
 
@@ -75,21 +83,49 @@ int main() {
     printf("Instructions: %s\n", instructions);
 
     // Part 1
-    // hash_map_print(nodes, print_string, print_node);
-    char* key = "AAA";
-    const char* instruction = instructions;
-    while (strcmp(key, "ZZZ") != 0) {
-        if (*instruction == '\0') {
-            instruction = instructions;
+    {
+        const char* key = "AAA";
+        const char* instruction = instructions;
+        while (strcmp(key, "ZZZ") != 0) {
+            if (*instruction == '\0') {
+                instruction = instructions;
+            }
+            const node_t* node = node_hash_map_get(nodes, key);
+            if (*instruction == 'L') {
+                key = node->left;
+            } else {
+                key = node->right;
+            }
+            ++part1ans;
+            ++instruction;
         }
-        node_t* node = node_hash_map_get(nodes, key);
-        if (*instruction == 'L') {
-            key = node->left;
-        } else {
-            key = node->right;
+    }
+
+    // Part 2
+    {
+        arraylist_print(starts, print_string);
+        const char* instruction = instructions;
+        uint64_t* results = malloc(sizeof(uint64_t) * starts->count);
+        for (int i = 0; i < starts->count; ++i) {
+            const char* key = starts->data[i];
+            while (key[2] != 'Z') {
+                if (*instruction == '\0') {
+                    instruction = instructions;
+                }
+                const node_t* node = node_hash_map_get(nodes, key);
+                if (*instruction == 'L') {
+                    key = node->left;
+                } else {
+                    key = node->right;
+                }
+                ++results[i];
+                ++instruction;
+            }
         }
-        ++part1ans;
-        ++instruction;
+
+        for (int i = 0; i < starts->count; ++i) {
+            part2ans = lcm(part2ans, results[i]);
+        }
     }
 
     printf("Part 1 answer %llu\n", part1ans);
